@@ -1,95 +1,78 @@
-import Image from "next/image";
+﻿"use client";
+
+import { FormEvent, useState } from "react";
 import styles from "./page.module.css";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!email || !password) {
+      setMessage("Please enter both email and password.");
+      return;
+    }
+
+    setMessage(`Login request submitted for ${email}${rememberMe ? " (remember me enabled)" : ""}.`);
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
+    <main className={styles.page}>
+      <section className={styles.card}>
+        <h1 className={styles.title}>Welcome Back</h1>
+        <p className={styles.subtitle}>Sign in to continue to your dashboard.</p>
+
+        <form className={styles.form} onSubmit={onSubmit}>
+          <label className={styles.label} htmlFor="email">
+            Email
+          </label>
+          <input
+            className={styles.input}
+            id="email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+          />
+
+          <label className={styles.label} htmlFor="password">
+            Password
+          </label>
+          <input
+            className={styles.input}
+            id="password"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            required
+          />
+
+          <label className={styles.rememberRow}>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
             />
-          </a>
-        </div>
-      </div>
+            Remember me
+          </label>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+          <button className={styles.button} type="submit">
+            Sign In
+          </button>
+        </form>
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+        {message ? <p className={styles.message}>{message}</p> : null}
+      </section>
     </main>
   );
 }
