@@ -54,6 +54,22 @@
   background: #115e59;
 }
 
+.modelRow {
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.modelSelect,
+.modelInput {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #ffffff;
+}
+
 .chatBox {
   border: 1px solid #dbe3ef;
   border-radius: 12px;
