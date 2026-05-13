@@ -1,5 +1,5 @@
 ﻿import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { addMessage, getSession, listMessages, updateSessionModel } from "@/lib/db";
 
 type OpenRouterMessage = {
   role: "user" | "assistant" | "system";
@@ -31,25 +31,15 @@ export async function POST(request: Request) {
     }
 
     const selectedModel = model || process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
-    const db = await getDb();
 
-    const session = await db.get("SELECT id FROM sessions WHERE id = ?", [sessionId]);
+    const session = getSession(sessionId);
     if (!session) {
       return NextResponse.json({ error: "Session not found." }, { status: 404 });
     }
 
-    const now = new Date().toISOString();
-    await db.run(
-      "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
-      [sessionId, "user", message, now],
-    );
+    addMessage(sessionId, "user", message);
 
-    const historyRows = await db.all(
-      "SELECT role, content FROM messages WHERE session_id = ? ORDER BY id ASC",
-      [sessionId],
-    );
-
-    const historyMessages = historyRows.map((row: { role: "user" | "assistant"; content: string }) => ({
+    const historyMessages = listMessages(sessionId).map((row) => ({
       role: row.role,
       content: row.content,
     }));
@@ -91,21 +81,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No reply returned by model." }, { status: 502 });
     }
 
-    await db.run(
-      "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
-      [sessionId, "assistant", reply, new Date().toISOString()],
-    );
-
-    await db.run("UPDATE sessions SET model = ?, updated_at = ? WHERE id = ?", [
-      selectedModel,
-      new Date().toISOString(),
-      sessionId,
-    ]);
-
-    const updatedSession = await db.get(
-      "SELECT id, title, model, created_at AS createdAt, updated_at AS updatedAt FROM sessions WHERE id = ?",
-      [sessionId],
-    );
+    addMessage(sessionId, "assistant", reply);
+    const updatedSession = updateSessionModel(sessionId, selectedModel);
 
     return NextResponse.json({ reply, session: updatedSession });
   } catch {

@@ -1,5 +1,5 @@
 ﻿import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getSession, listMessages } from "@/lib/db";
 
 export async function GET(
   _request: Request,
@@ -10,21 +10,11 @@ export async function GET(
     return NextResponse.json({ error: "Invalid session id." }, { status: 400 });
   }
 
-  const db = await getDb();
-
-  const session = await db.get(
-    "SELECT id, title, model, created_at AS createdAt, updated_at AS updatedAt FROM sessions WHERE id = ?",
-    [sessionId],
-  );
-
+  const session = getSession(sessionId);
   if (!session) {
     return NextResponse.json({ error: "Session not found." }, { status: 404 });
   }
 
-  const messages = await db.all(
-    "SELECT id, role, content, created_at AS createdAt FROM messages WHERE session_id = ? ORDER BY id ASC",
-    [sessionId],
-  );
-
+  const messages = listMessages(sessionId);
   return NextResponse.json({ session, messages });
 }

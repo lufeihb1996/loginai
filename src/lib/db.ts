@@ -1,37 +1,104 @@
-﻿import path from "path";
-import sqlite3 from "sqlite3";
-import { open, Database } from "sqlite";
+﻿export type ChatRole = "user" | "assistant";
 
-let dbPromise: Promise<Database> | null = null;
+export type Session = {
+  id: number;
+  title: string;
+  model: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
-export async function getDb() {
-  if (!dbPromise) {
-    const filename = path.join(process.cwd(), "data.sqlite");
-    dbPromise = open({
-      filename,
-      driver: sqlite3.Database,
-    });
+export type Message = {
+  id: number;
+  sessionId: number;
+  role: ChatRole;
+  content: string;
+  createdAt: string;
+};
 
-    const db = await dbPromise;
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS sessions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        model TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      );
+type Store = {
+  sessionSeq: number;
+  messageSeq: number;
+  sessions: Session[];
+  messages: Message[];
+};
 
-      CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id INTEGER NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY(session_id) REFERENCES sessions(id) ON DELETE CASCADE
-      );
-    `);
+declare global {
+  // eslint-disable-next-line no-var
+  var __loginaiStore: Store | undefined;
+}
+
+function getStore(): Store {
+  if (!global.__loginaiStore) {
+    global.__loginaiStore = {
+      sessionSeq: 1,
+      messageSeq: 1,
+      sessions: [],
+      messages: [],
+    };
   }
 
-  return dbPromise;
+  return global.__loginaiStore;
+}
+
+export function listSessions(): Session[] {
+  const store = getStore();
+  return [...store.sessions].sort((a, b) =>
+    a.updatedAt < b.updatedAt ? 1 : -1,
+  );
+}
+
+export function createSession(model: string): Session {
+  const store = getStore();
+  const now = new Date().toISOString();
+  const session: Session = {
+    id: store.sessionSeq++,
+    title: "New Chat",
+    model,
+    createdAt: now,
+    updatedAt: now,
+  };
+  store.sessions.push(session);
+  return session;
+}
+
+export function getSession(id: number): Session | null {
+  const store = getStore();
+  return store.sessions.find((s) => s.id === id) || null;
+}
+
+export function listMessages(sessionId: number): Message[] {
+  const store = getStore();
+  return store.messages
+    .filter((m) => m.sessionId === sessionId)
+    .sort((a, b) => a.id - b.id);
+}
+
+export function addMessage(
+  sessionId: number,
+  role: ChatRole,
+  content: string,
+): Message {
+  const store = getStore();
+  const message: Message = {
+    id: store.messageSeq++,
+    sessionId,
+    role,
+    content,
+    createdAt: new Date().toISOString(),
+  };
+  store.messages.push(message);
+  return message;
+}
+
+export function updateSessionModel(sessionId: number, model: string): Session | null {
+  const store = getStore();
+  const session = store.sessions.find((s) => s.id === sessionId);
+  if (!session) {
+    return null;
+  }
+
+  session.model = model;
+  session.updatedAt = new Date().toISOString();
+  return session;
 }
