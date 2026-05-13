@@ -1,9 +1,11 @@
 ﻿"use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 
-export default function Home() {
+export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -17,7 +19,15 @@ export default function Home() {
       return;
     }
 
-    setMessage(`Login request submitted for ${email}${rememberMe ? " (remember me enabled)" : ""}.`);
+    localStorage.setItem("demo_auth", "logged_in");
+    localStorage.setItem("demo_user", email);
+    if (rememberMe) {
+      localStorage.setItem("demo_remember", "1");
+    } else {
+      localStorage.removeItem("demo_remember");
+    }
+
+    router.push("/home");
   };
 
   return (
